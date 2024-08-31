@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
 const systemPrompt = `
-  You are a flashcard creator to help students study for their AWS exam.
+  You are a flashcard creator to help students study for any topic that they wish.
 
   1. Create clear and concise questions for the front of the flashcard. 
   2. Provide accurate and informative answers for the back of the flashcard. 
@@ -25,7 +25,7 @@ export async function POST(req) {
 
   try {
     const openai = new OpenAI({ 
-      apikey: process.env.OPENAI_API_KEY, baseURL: "https://openrouter.ai/api/v1"
+      apikey: process.env.OPENAI_API_KEY
     });
     const data = await req.text();
     const completion = await openai.chat.completions.create({
