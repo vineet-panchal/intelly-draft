@@ -1,5 +1,7 @@
 'use client';
-
+// import db from "@/firebase";
+import db from "@/firebase.js";
+import { doc, setDoc, getDoc, writeBatch, collection } from "firebase/firestore";
 import { useUser } from "@clerk/nextjs";
 import { 
   Container, 
@@ -18,7 +20,7 @@ import {
   DialogContentText, 
   DialogActions 
 } from "@mui/material";
-import { writeBatch } from "firebase/firestore";
+// import { writeBatch } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -104,41 +106,131 @@ export default function Generate() {
     setOpen(false)
   }
 
-  const saveFlashcards = async () => {
-    if (!name) {
-      alert("Please enter a name")
-      return
-    }
+  // const saveFlashcards = async () => {
+  //   if (!name) {
+  //     alert("Please enter a name")
+  //     return
+  //   }
 
+  //   const batch = writeBatch(db);
+  //   const userDocRef = doc(collection(db, "users"), user.id);
+  //   const docSnap = await getDoc(userDocRef);
+
+  //   if (docSnap.exists()) {
+  //     const collections = docSnap.data().flashcards || []
+  //     if (collections.find((f) => f.name === name)) {
+  //       alert("A flashcard with this name already exists");
+  //       return
+  //     } else {
+  //       collections.push({name})
+  //       batch.set(userDocRef, {flashcards: collections}, {merge: true})
+  //     }
+  //   }
+
+  //   else {
+  //     batch.set(userDocRef, {flashcards: [{name}]})
+  //   }
+
+  //   const colRef = collection(userDocRef, name)
+  //   flashcards.forEach((flashcard) => {
+  //     const cardDocRef = doc(colRef) 
+  //     batch.set(cardDocRef, flashcard)
+  //   })
+
+  //   await batch.commit()
+  //   handleClose()
+  //   router.push('/flashcards')
+  // }
+
+
+  const saveFlashcards = async () => {
+
+    if (!user) {
+      console.error("User is null or not defined.");
+      return;
+    }
+    console.log(user);
+    
+    if (!isLoaded) {
+      alert("User data is still loading. Please wait.");
+      return;
+    }
+  
+    if (!isSignedIn) {
+      alert("User is not signed in.");
+      return;
+    }
+  
+    if (!name) {
+      alert("Please enter a name");
+      return;
+    }
+  
     const batch = writeBatch(db);
     const userDocRef = doc(collection(db, "users"), user.id);
     const docSnap = await getDoc(userDocRef);
-
+  
     if (docSnap.exists()) {
-      const collections = docSnap.data().flashcards || []
+      const collections = docSnap.data().flashcards || [];
       if (collections.find((f) => f.name === name)) {
         alert("A flashcard with this name already exists");
-        return
+        return;
       } else {
-        collections.push({name})
-        batch.set(userDocRef, {flashcards: collections}, {merge: true})
+        collections.push({ name });
+        batch.set(userDocRef, { flashcards: collections }, { merge: true });
       }
+    } else {
+      batch.set(userDocRef, { flashcards: [{ name }] });
     }
-
-    else {
-      batch.set(userDocRef, {flashcards: [{name}]})
-    }
-
-    const colRef = collection(userDocRef, name)
+  
+    const colRef = collection(userDocRef, name);
     flashcards.forEach((flashcard) => {
-      const cardDocRef = doc(colRef) 
-      batch.set(cardDocRef, flashcard)
-    })
+      const cardDocRef = doc(colRef);
+      batch.set(cardDocRef, flashcard);
+    });
+  
+    await batch.commit();
+    handleClose();
+    router.push('/flashcards');
+  };
 
-    await batch.commit()
-    handleClose()
-    router.push('/flashcards')
-  }
+  // const saveFlashcards = async () => {
+  //   if (name.length == 0) {
+  //     alert('Please enter a name for your flashcard set.')
+  //     return
+  //   }
+  
+  //   try {
+  //     const userDocRef = doc(collection(db, 'users'), user.id)
+  //     const userDocSnap = await getDoc(userDocRef)
+  
+  //     const batch = writeBatch(db)
+  
+  //     if (userDocSnap.exists()) {
+  //       const userData = userDocSnap.data()
+  //       const updatedSets = [...(userData.flashcardSets || []), { name: setName }]
+  //       batch.update(userDocRef, { flashcardSets: updatedSets })
+  //     } else {
+  //       batch.set(userDocRef, { flashcardSets: [{ name: setName }] })
+  //     }
+  
+  //     const setDocRef = doc(collection(userDocRef, 'flashcardSets'), setName)
+  //     // const setDocRef = doc(collection(db, 'users', user.id, 'flashcardSets'), setName);
+
+  //     batch.set(setDocRef, { flashcards })
+  
+  //     await batch.commit()
+  
+  //     alert('Flashcards saved successfully!')
+  //     handleCloseDialog()
+  //     setName('')
+  //   } catch (error) {
+  //     console.error('Error saving flashcards:', error)
+  //     alert('An error occurred while saving flashcards. Please try again.')
+  //   }
+  // }
+
+  
   
   return (
     <Container maxWidth="md">
